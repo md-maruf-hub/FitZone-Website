@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ShoppingCart,
@@ -5,155 +6,194 @@ import {
   House,
   LogOut,
   ShieldCheck,
+  Menu,
+  X,
 } from "lucide-react";
 
 const Navbar = () => {
+  const [open, setOpen] = useState(false);
 
-  const user = JSON.parse(
-    localStorage.getItem("user")
-  );
+  const user = JSON.parse(localStorage.getItem("user"));
 
   const handleLogout = () => {
-
     localStorage.removeItem("token");
-
     localStorage.removeItem("user");
-
     window.location.href = "/";
   };
 
   return (
-    <nav className="flex items-center justify-between px-10 py-6 bg-white border-b border-gray-200 sticky top-0 z-50">
+    <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
 
-      {/* Logo */}
-      <Link
-        to="/"
-        className="text-3xl font-black text-lime-700 tracking-tight"
-      >
-        FITZONE
-      </Link>
+      <div className="flex items-center justify-between px-4 sm:px-6 lg:px-10 py-4">
 
-      {/* Menu */}
-      <div className="hidden md:flex items-center gap-10 uppercase text-sm font-bold tracking-widest">
-
-        <Link
-          to="/products"
-          className="hover:text-lime-500 transition-all duration-300"
-        >
-          Equipment
-        </Link>
-
+        {/* Logo */}
         <Link
           to="/"
-          className="hover:text-lime-500 transition-all duration-300"
+          className="text-2xl sm:text-3xl font-black text-lime-700 tracking-tight"
         >
-          Apparel
+          FITZONE
         </Link>
 
-        <Link
-          to="/"
-          className="hover:text-lime-500 transition-all duration-300"
-        >
-          Accessories
-        </Link>
+        {/* Desktop Menu */}
+        <div className="hidden md:flex items-center gap-6 lg:gap-10 uppercase text-sm font-bold tracking-widest">
 
-        <Link
-          to="/"
-          className="hover:text-lime-500 transition-all duration-300"
-        >
-          Coaching
-        </Link>
+          <Link to="/products" className="hover:text-lime-500 transition">
+            Equipment
+          </Link>
 
-      </div>
+          <Link to="/" className="hover:text-lime-500 transition">
+            Apparel
+          </Link>
 
-      {/* Right Side */}
-      <div className="flex items-center gap-6">
+          <Link to="/" className="hover:text-lime-500 transition">
+            Accessories
+          </Link>
 
-        {/* Username */}
-        {
-          user && (
-            <div className="hidden md:flex flex-col items-end">
+          <Link to="/" className="hover:text-lime-500 transition">
+            Coaching
+          </Link>
 
+        </div>
+
+        {/* Right Side (Desktop) */}
+        <div className="hidden md:flex items-center gap-4 lg:gap-6">
+
+          {user && (
+            <div className="flex flex-col items-end">
               <p className="text-xs uppercase text-gray-400">
                 ACTIVE_USER
               </p>
-
               <h2 className="font-black text-lime-600 uppercase text-sm">
                 {user.name}
               </h2>
-
             </div>
-          )
-        }
+          )}
 
-        {/* Home */}
-        <Link to="/">
-          <House className="w-5 h-5 hover:text-lime-500 transition-all duration-300" />
-        </Link>
+          <Link to="/">
+            <House className="w-5 h-5 hover:text-lime-500 transition" />
+          </Link>
 
-        {/* Cart */}
-        <Link to="/cart">
-          <ShoppingCart className="w-5 h-5 hover:text-lime-500 cursor-pointer transition-all duration-300" />
-        </Link>
+          <Link to="/cart">
+            <ShoppingCart className="w-5 h-5 hover:text-lime-500 transition" />
+          </Link>
 
-        {/* Admin Dashboard */}
-        {
-          user?.role === "admin" && (
+          {user?.role === "admin" && (
             <Link to="/admin-dashboard">
-
-              <ShieldCheck className="w-5 h-5 text-lime-600 hover:text-lime-500 transition-all duration-300" />
-
+              <ShieldCheck className="w-5 h-5 text-lime-600 hover:text-lime-500 transition" />
             </Link>
-          )
-        }
+          )}
 
-        {/* User Dashboard */}
-        {
-          user && (
+          {user && (
             <Link to="/dashboard">
-
-              <User className="w-5 h-5 hover:text-lime-500 transition-all duration-300" />
-
+              <User className="w-5 h-5 hover:text-lime-500 transition" />
             </Link>
-          )
-        }
+          )}
 
-        {/* Logout */}
-        {
-          user ? (
-
+          {user ? (
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 bg-red-500 hover:bg-red-600 transition-all duration-300 text-white px-4 py-2 rounded-lg text-sm font-bold uppercase"
+              className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-xs font-bold uppercase"
             >
               <LogOut className="w-4 h-4" />
-
               Logout
             </button>
-
           ) : (
-
-            <div className="flex items-center gap-4">
-
+            <div className="flex items-center gap-3">
               <Link
                 to="/login"
-                className="uppercase text-sm font-bold hover:text-lime-500 transition-all duration-300"
+                className="uppercase text-sm font-bold hover:text-lime-500"
               >
                 Login
               </Link>
 
               <Link
                 to="/register"
-                className="bg-lime-400 hover:bg-lime-300 transition-all duration-300 px-5 py-2 rounded-lg text-black text-sm font-black uppercase"
+                className="bg-lime-400 hover:bg-lime-300 px-4 py-2 rounded-lg text-black text-sm font-black uppercase"
               >
                 Register
               </Link>
-
             </div>
-          )
-        }
+          )}
+
+        </div>
+
+        {/* Mobile Menu Button */}
+        <button
+          className="md:hidden"
+          onClick={() => setOpen(!open)}
+        >
+          {open ? <X /> : <Menu />}
+        </button>
 
       </div>
+
+      {/* Mobile Menu */}
+      {open && (
+        <div className="md:hidden px-4 pb-4 space-y-4 uppercase font-bold text-sm">
+
+          <Link to="/products" onClick={() => setOpen(false)}>
+            Equipment
+          </Link>
+
+          <Link to="/" onClick={() => setOpen(false)}>
+            Apparel
+          </Link>
+
+          <Link to="/" onClick={() => setOpen(false)}>
+            Accessories
+          </Link>
+
+          <Link to="/" onClick={() => setOpen(false)}>
+            Coaching
+          </Link>
+
+          <hr />
+
+          <div className="flex items-center gap-4">
+
+            <Link to="/" onClick={() => setOpen(false)}>
+              <House />
+            </Link>
+
+            <Link to="/cart" onClick={() => setOpen(false)}>
+              <ShoppingCart />
+            </Link>
+
+            {user && (
+              <Link to="/dashboard" onClick={() => setOpen(false)}>
+                <User />
+              </Link>
+            )}
+
+            {user?.role === "admin" && (
+              <Link to="/admin-dashboard" onClick={() => setOpen(false)}>
+                <ShieldCheck />
+              </Link>
+            )}
+
+          </div>
+
+          {user ? (
+            <button
+              onClick={handleLogout}
+              className="w-full bg-red-500 text-white py-2 rounded-lg"
+            >
+              Logout
+            </button>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <Link to="/login" onClick={() => setOpen(false)}>
+                Login
+              </Link>
+              <Link to="/register" onClick={() => setOpen(false)}>
+                Register
+              </Link>
+            </div>
+          )}
+
+        </div>
+      )}
+
     </nav>
   );
 };

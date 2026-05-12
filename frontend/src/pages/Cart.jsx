@@ -1,395 +1,231 @@
 // src/pages/Cart.jsx
 
 import { useState, useEffect } from "react";
-
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-
-import {
-    Trash2,
-    Plus,
-    Minus,
-} from "lucide-react";
-
+import { Trash2, Plus, Minus } from "lucide-react";
 import api from "../api/api";
 
-
 const Cart = () => {
-
     const [cartItems, setCartItems] = useState([]);
-
     const [loading, setLoading] = useState(true);
 
     const token = localStorage.getItem("token");
+    const user = JSON.parse(localStorage.getItem("user"));
 
-    const handleOrder = async () => {
-  const user = JSON.parse(localStorage.getItem("user"));
+    const totalPrice = cartItems.reduce(
+        (total, item) =>
+            total + (item.product?.price || 0) * item.quantity,
+        0
+    );
 
-   await api.post(
-  "/orders",
-  {
-    userId: user._id,
-    products: cartItems,
-    totalPrice,
-  },
-  {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  }
-);
-
-  alert("Order placed!");
-};
-
-
-
-    // FETCH USER CART
     const fetchCart = async () => {
-
         try {
-
-            const res = await api.get(
-                "/cart",
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
+            const res = await api.get("/cart", {
+                headers: { Authorization: `Bearer ${token}` },
+            });
 
             setCartItems(res.data);
 
+            window.dispatchEvent(
+                new CustomEvent("cart-update", {
+                    detail: res.data.length,
+                })
+            );
+
         } catch (error) {
-
             console.log(error);
-
         } finally {
-
             setLoading(false);
         }
     };
 
-
     useEffect(() => {
-
         fetchCart();
-
     }, []);
 
-
-    // INCREASE QUANTITY
-    const increaseQty = async (
-        id,
-        quantity
-    ) => {
-
+    const increaseQty = async (id, quantity) => {
         try {
-
             await api.put(
                 `/cart/${id}`,
-                {
-                    quantity: quantity + 1,
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
+                { quantity: quantity + 1 },
+                { headers: { Authorization: `Bearer ${token}` } }
             );
-
             fetchCart();
-
         } catch (error) {
-
             console.log(error);
         }
     };
 
-
-    // DECREASE QUANTITY
-    const decreaseQty = async (
-        id,
-        quantity
-    ) => {
-
+    const decreaseQty = async (id, quantity) => {
         if (quantity <= 1) return;
 
         try {
-
             await api.put(
                 `/cart/${id}`,
+                { quantity: quantity - 1 },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            fetchCart();
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    const removeItem = async (id) => {
+        try {
+            await api.delete(`/cart/${id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            fetchCart();
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    const handleOrder = async () => {
+        try {
+            await api.post(
+                "/orders",
                 {
-                    quantity: quantity - 1,
+                    userId: user._id,
+                    products: cartItems,
+                    totalPrice,
                 },
                 {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
+                    headers: { Authorization: `Bearer ${token}` },
                 }
             );
 
-            fetchCart();
-
+            alert("Order placed successfully!");
         } catch (error) {
-
             console.log(error);
+            alert("Order failed!");
         }
     };
-
-
-    // REMOVE ITEM
-    const removeItem = async (id) => {
-
-        try {
-
-            await api.delete(
-                `/cart/${id}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
-
-            fetchCart();
-
-        } catch (error) {
-
-            console.log(error);
-        }
-    };
-
-
-    // TOTAL PRICE
-    const totalPrice = cartItems.reduce(
-
-        (total, item) =>
-
-            total +
-            (item.product?.price || 0) *
-            item.quantity,
-
-        0
-    );
-
 
     if (loading) {
-
         return (
-
             <div className="min-h-screen flex items-center justify-center">
-
-                <h1 className="text-4xl font-black">
+                <h1 className="text-2xl sm:text-4xl font-black">
                     Loading...
                 </h1>
-
             </div>
         );
     }
 
-
     return (
-
         <div className="bg-[#f5f5f3] min-h-screen text-black">
 
             <Navbar />
 
-            <div className="max-w-[1400px] mx-auto px-6 lg:px-10 py-16">
+            <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-10 sm:py-14 lg:py-16">
 
-                {/* Header */}
-                <div className="mb-16">
+                {/* TITLE */}
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black uppercase mb-8 sm:mb-10">
+                    Cart
+                </h1>
 
-                    <p className="uppercase tracking-[4px] text-gray-500 text-sm mb-4">
-                        Secure Checkout System
-                    </p>
+                {cartItems.length === 0 ? (
+                    <div className="bg-white p-6 sm:p-10 border text-center">
+                        Cart is empty
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10">
 
-                    <h1 className="text-6xl lg:text-7xl font-black uppercase">
-                        Cart Grid
-                    </h1>
+                        {/* ITEMS */}
+                        <div className="lg:col-span-2 space-y-5 sm:space-y-6">
 
-                </div>
+                            {cartItems.map((item) => (
+                                <div
+                                    key={item._id}
+                                    className="bg-white p-4 sm:p-6 border flex flex-col sm:flex-row gap-4 sm:gap-6"
+                                >
 
-                {
-                    cartItems.length === 0 ? (
+                                    <img
+                                        src={item.product?.image}
+                                        className="w-full sm:w-[130px] lg:w-[150px] h-[180px] sm:h-[130px] lg:h-[150px] object-cover"
+                                    />
 
-                        <div className="bg-white border border-gray-300 p-20 text-center">
+                                    <div className="flex-1">
 
-                            <h2 className="text-4xl font-black uppercase mb-6">
-                                Cart Is Empty
-                            </h2>
+                                        <h2 className="text-lg sm:text-xl lg:text-2xl font-bold">
+                                            {item.product?.name}
+                                        </h2>
 
-                            <p className="text-gray-500 text-lg">
-                                Add products to initialize checkout sequence.
-                            </p>
+                                        <p className="text-green-600 text-lg sm:text-xl mt-1">
+                                            ${item.product?.price}
+                                        </p>
 
-                        </div>
+                                        {/* QTY */}
+                                        <div className="flex items-center mt-4 border w-fit">
 
-                    ) : (
+                                            <button
+                                                onClick={() =>
+                                                    decreaseQty(item._id, item.quantity)
+                                                }
+                                                className="p-2"
+                                            >
+                                                <Minus size={16} />
+                                            </button>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                                            <span className="px-3 sm:px-4 text-sm sm:text-base">
+                                                {item.quantity}
+                                            </span>
 
-                            {/* Cart Items */}
-                            <div className="lg:col-span-2 space-y-6">
-
-                                {
-                                    cartItems.map((item) => (
-
-                                        <div
-                                            key={item._id}
-                                            className="bg-white border border-gray-300 p-6 flex flex-col lg:flex-row gap-6"
-                                        >
-
-                                            {/* Image */}
-                                            <img
-                                                src={item.product?.image}
-                                                alt={item.product?.name}
-                                                className="w-full lg:w-[220px] h-[220px] object-cover"
-                                            />
-
-                                            {/* Content */}
-                                            <div className="flex-1 flex flex-col justify-between">
-
-                                                <div>
-
-                                                    <p className="uppercase tracking-[3px] text-sm text-gray-400 mb-3">
-                                                        {
-                                                            item.product?.category
-                                                        }
-                                                    </p>
-
-                                                    <h2 className="text-3xl font-black uppercase leading-tight">
-                                                        {
-                                                            item.product?.name
-                                                        }
-                                                    </h2>
-
-                                                    <h3 className="text-3xl text-[#7d9d00] mt-6">
-                                                        $
-                                                        {
-                                                            item.product?.price
-                                                        }
-                                                    </h3>
-
-                                                </div>
-
-                                                {/* Controls */}
-                                                <div className="flex flex-wrap items-center justify-between mt-10 gap-5">
-
-                                                    {/* Quantity */}
-                                                    <div className="flex items-center border border-gray-300">
-
-                                                        <button
-                                                            onClick={() =>
-                                                                decreaseQty(
-                                                                    item._id,
-                                                                    item.quantity
-                                                                )
-                                                            }
-                                                            className="px-5 py-3 hover:bg-gray-100"
-                                                        >
-                                                            <Minus size={18} />
-                                                        </button>
-
-                                                        <span className="px-8 font-bold">
-                                                            {item.quantity}
-                                                        </span>
-
-                                                        <button
-                                                            onClick={() =>
-                                                                increaseQty(
-                                                                    item._id,
-                                                                    item.quantity
-                                                                )
-                                                            }
-                                                            className="px-5 py-3 hover:bg-gray-100"
-                                                        >
-                                                            <Plus size={18} />
-                                                        </button>
-
-                                                    </div>
-
-                                                    {/* Remove */}
-                                                    <button
-                                                        onClick={() =>
-                                                            removeItem(item._id)
-                                                        }
-                                                        className="flex items-center gap-3 uppercase tracking-[2px] text-red-500 hover:text-red-700"
-                                                    >
-
-                                                        <Trash2 size={18} />
-
-                                                        Remove
-
-                                                    </button>
-
-                                                </div>
-
-                                            </div>
+                                            <button
+                                                onClick={() =>
+                                                    increaseQty(item._id, item.quantity)
+                                                }
+                                                className="p-2"
+                                            >
+                                                <Plus size={16} />
+                                            </button>
 
                                         </div>
-                                    ))
-                                }
 
-                            </div>
-
-                            {/* Summary */}
-                            <div className="bg-white border border-gray-300 p-8 h-fit sticky top-24">
-
-                                <h2 className="text-3xl font-black uppercase mb-10">
-                                    Order Summary
-                                </h2>
-
-                                <div className="space-y-6">
-
-                                    <div className="flex justify-between uppercase text-sm tracking-[2px]">
-
-                                        <span>
-                                            Total Items
-                                        </span>
-
-                                        <span>
-                                            {cartItems.reduce((total, item) => total + item.quantity, 0)}
-                                        </span>
-
-                                    </div>
-
-                                    <div className="flex justify-between uppercase text-sm tracking-[2px]">
-
-                                        <span>
-                                            Shipping
-                                        </span>
-
-                                        <span>
-                                            FREE
-                                        </span>
-
-                                    </div>
-
-                                    <div className="border-t border-gray-300 pt-6 flex justify-between items-center">
-
-                                        <span className="uppercase tracking-[2px] font-bold">
-                                            Total
-                                        </span>
-
-                                        <h3 className="text-4xl font-black text-[#7d9d00]">
-                                            $
-                                            {totalPrice.toFixed(2)}
-                                        </h3>
+                                        {/* REMOVE */}
+                                        <button
+                                            onClick={() => removeItem(item._id)}
+                                            className="text-red-500 mt-4 flex items-center gap-2 text-sm sm:text-base"
+                                        >
+                                            <Trash2 size={16} />
+                                            Remove
+                                        </button>
 
                                     </div>
 
                                 </div>
-
-                                <button onClick={handleOrder} className="w-full bg-[#d6ff00] py-5 uppercase tracking-[3px] font-bold text-lg hover:bg-lime-300 transition mt-10">
-                                    Proceed To Checkout →
-                                </button>
-
-                            </div>
+                            ))}
 
                         </div>
-                    )
-                }
+
+                        {/* SUMMARY */}
+                        <div className="bg-white p-5 sm:p-6 border h-fit sticky top-24">
+
+                            <h2 className="text-xl sm:text-2xl font-bold mb-5 sm:mb-6">
+                                Order Summary
+                            </h2>
+
+                            <div className="flex justify-between mb-3 sm:mb-4 text-sm sm:text-base">
+                                <span>Total</span>
+                                <span className="font-bold">
+                                    ${totalPrice.toFixed(2)}
+                                </span>
+                            </div>
+
+                            <button
+                                onClick={handleOrder}
+                                className="w-full bg-black text-white py-3 sm:py-4 mt-5 sm:mt-6 uppercase font-bold tracking-[2px] text-sm sm:text-base"
+                            >
+                                Checkout
+                            </button>
+
+                        </div>
+
+                    </div>
+                )}
 
             </div>
 
