@@ -11,7 +11,7 @@ connectDB()
 const app = express()
 
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || "https://fit-zone-website.vercel.app/",
+  origin: process.env.CORS_ORIGIN || "https://fit-zone-website.vercel.app",
   credentials: true
 }))
 
